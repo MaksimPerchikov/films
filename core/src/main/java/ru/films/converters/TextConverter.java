@@ -2,10 +2,13 @@ package ru.films.converters;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import ru.films.dto.FilmDto;
 
 public class TextConverter {
+
+    private static final List<String> listWords = new LinkedList<>();
 
     public static FilmDto convertText(String text, String score) {
         FilmDto film = new FilmDto();
@@ -19,11 +22,21 @@ public class TextConverter {
         String originalName = getOriginalNameFromText(text);
         film.setOriginalName(originalName);
 
-        String yearOfRelease = getSimpleField(text, "Год выхода:", "Режиссер:");
-        film.setYearOfRelease(yearOfRelease);
+        try {
+            String yearOfRelease = getSimpleField(text, "Год выхода:", "Режиссер:");
+            film.setYearOfRelease(yearOfRelease);
+        } catch (Exception e) {
+            String yearOfRelease = getSimpleField(text, "Год выхода:", "Страна:");
+            film.setYearOfRelease(yearOfRelease);
+        }
 
-        String director = getSimpleField(text, "Режиссер:", "Страна:");
-        film.setDirector(director);
+        try {
+            String director = getSimpleField(text, "Режиссер:", "Страна:");
+            film.setDirector(director);
+        } catch (Exception e) {
+            String director = getSimpleField(text, "Режиссер:", "Актеры:");
+            film.setDirector(director);
+        }
 
         List<String> actors = getListActors(text);
         film.setActors(actors);
@@ -38,7 +51,7 @@ public class TextConverter {
      */
     public static String convertToStringBuilderAndAfterStringThreeFields(FilmDto filmDto) {
         String str = "\n" + filmDto.getName() + " "
-            + "(" + filmDto.getYearOfRelease() + ") " + "Оценка: "
+            + "(" + filmDto.getYearOfRelease() + ") " + "Оценка "
             + filmDto.getScore() + "\n";
         return str;
     }
@@ -187,22 +200,26 @@ public class TextConverter {
         return "";
     }
 
-    private static String getNameFromText(String text) {
-        String targetName = "(фильм,";
+    private static void addElementsToList() {
+        listWords.add("фильм смотреть");
+        listWords.add("смотреть фильм");
+        listWords.add("(фильм,");
+        listWords.add("(20");
+        listWords.add("(19");
+        listWords.add("смотреть онлайн");
+    }
+
+    public static String getNameFromText(String text) {
         String name = null;
-        int indexTargetName = text.indexOf(targetName);
-        try {
-            if (indexTargetName != -1) {
-                name = text.substring(0, indexTargetName);
-            } else {
-                targetName = "смотреть фильм";
-                indexTargetName = text.indexOf(targetName);
-                name = text.substring(0, indexTargetName);
+        addElementsToList();
+        for (String word : listWords) {
+            boolean contains = text.contains(word);
+            if (contains) {
+                int indexTargetName = text.indexOf(word);
+                name = text.substring(0, indexTargetName).trim();
+                break;
             }
-            return name.trim();
-        } catch (Exception e) {
-            System.out.println("Name do not search");
         }
-        return "Информация не найдена.";
+        return name;
     }
 }
