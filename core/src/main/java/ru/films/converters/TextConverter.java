@@ -22,6 +22,7 @@ public class TextConverter {
         String originalName = getOriginalNameFromText(text);
         film.setOriginalName(originalName);
 
+
         try {
             String yearOfRelease = getSimpleField(text, "Год выхода:", "Режиссер:");
             film.setYearOfRelease(yearOfRelease);
@@ -37,6 +38,7 @@ public class TextConverter {
             String director = getSimpleField(text, "Режиссер:", "Актеры:");
             film.setDirector(director);
         }
+
 
         List<String> actors = getListActors(text);
         film.setActors(actors);

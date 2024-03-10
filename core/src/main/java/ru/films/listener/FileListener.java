@@ -2,11 +2,14 @@ package ru.films.listener;
 
 import java.io.File;
 import java.io.IOException;
+import ru.films.service.ReadFile;
 
 public class FileListener {
 
-    public static File createFileText(String nameFile) {
-        String defaultFilePath = "C:\\Users\\MPerchikov\\Desktop\\films\\" + nameFile;
+    public static File createFileText(String nameFile) {//pathToFile.txt
+        ReadFile readFile = new ReadFile();
+        String pathFromResources = readFile.getPathFromResources();
+        String defaultFilePath = pathFromResources + nameFile;
         File myFile = new File(defaultFilePath);
 
         if (myFile.exists()) {

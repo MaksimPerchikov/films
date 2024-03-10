@@ -5,42 +5,42 @@ import java.util.List;
 public class FilmDto {
 
     /**
-     * Уникальный идентификатор
+     * id С„РёР»СЊРјР°
      */
     private Long id;
 
     /**
-     * Название фильма
+     * РЅР°РёРјРµРЅРѕРІР°РЅРёРµ С„РёР»СЊРјР°
      */
     private String name;
 
     /**
-     * Моя оценка
+     * РѕС†РµРЅРєР°
      */
     private String score;
 
     /**
-     * Оригинальное название фильма
+     * РѕСЂРёРіРёРЅР°Р»СЊРЅРѕРµ РЅР°Р·РІР°РЅРёРµ С„РёР»СЊРјР°
      */
     private String originalName;
 
     /**
-     * Год выпуска
+     * РґР°С‚Р° РІС‹РїСѓСЃРєР°
      */
     private String yearOfRelease;
 
     /**
-     * Режиссер
+     * СЂРµР¶РёСЃСЃРµСЂ
      */
     private String director;
 
     /**
-     * Жанр
+     * Р¶Р°РЅСЂС‹
      */
     private List<String> genres;
 
     /**
-     * Актеры
+     * Р°РєС‚РµСЂС‹
      */
     private List<String> actors;
 
