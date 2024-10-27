@@ -2,11 +2,14 @@ package ru.films;
 
 import static ru.films.listener.FileListener.createFileText;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JButton;
@@ -28,6 +31,7 @@ import ru.films.panels.LoadingPanel;
 import ru.films.service.AddValuesToFile;
 import ru.films.service.RandomNumber;
 import ru.films.service.ReadFile;
+import ru.films.service.SearchExistFilms;
 import ru.films.warning.WarningNotification;
 
 public class JFrameWindowListener extends JFrame {
@@ -37,6 +41,7 @@ public class JFrameWindowListener extends JFrame {
     private JButton sendButton;//input
     private JButton angrySendButton;//angry input
     private JButton readFile;//read
+    private JButton exit;//exit
     private JTextArea responseArea;
     private AddValuesToFile addValuesToFile;
 
@@ -46,17 +51,17 @@ public class JFrameWindowListener extends JFrame {
     private JMenuItem sortedByScore;
 
     private JLabel gifLabel;
+    private int xMouse, yMouse;
 
     public JFrameWindowListener() throws IOException {
+        setUndecorated(true);//убрать рамку
         ReadFile getAllValuesFromFIle = new ReadFile();
         gifLabel = new JLabel();
         JPanel panel = new JPanel();
         addValuesToFile = new AddValuesToFile();
         File myFilms = createFileText("myFilms.txt");
         File sortedMyFilms = createFileText("sortedMyFilms.txt");
-        setTitle("Films");
         setSize(1000, 700);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         inputField = new JTextField(20);
         score = new JTextField(10);
 
@@ -68,6 +73,7 @@ public class JFrameWindowListener extends JFrame {
         readFile = new JButton("Read from the file");
         sortedByName = new JMenuItem("Sort by Name");
         sortedByScore = new JMenuItem("Sort by Score");
+        exit = new JButton("Exit");
 
         responseArea = new JTextArea(15, 20);
         responseArea.setForeground(Color.BLACK);
@@ -81,11 +87,21 @@ public class JFrameWindowListener extends JFrame {
         popupMenu.add(sortedByName);
         popupMenu.add(sortedByScore);
 
+        mouseListener();
+
+        exit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setVisible(false);
+                dispose();
+            }
+        });
+
         angrySendButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 changeColorButton(angrySendButton, Color.GREEN);
-                createLoading(1000);
+                createLoading(500);
                 openAngryInputPanel();
                 changeColorButton(angrySendButton, Color.ORANGE);
             }
@@ -105,11 +121,10 @@ public class JFrameWindowListener extends JFrame {
                 sortedByName.setForeground(Color.GREEN);
                 sortedByScore.setForeground(null);
                 changeColorButton(readFile, null);//возвращаем дефолтный цвет кнопке readFile
-
                 clearTextArea(responseArea);//очищаем форму
                 ReadFile readFile = new ReadFile();
                 String result = readFile.readFileAndSortedByName(myFilms.getPath());
-                addValuesToFile.deleteAllinformation(sortedMyFilms);
+                addValuesToFile.deleteAllInformation(sortedMyFilms);
                 addValuesToFile.addValue(result, sortedMyFilms);
                 responseArea.append(result + "\n");
                 responseArea.setCaretPosition(0);// Устанавливаем курсор в начало JTextArea
@@ -128,23 +143,21 @@ public class JFrameWindowListener extends JFrame {
                 clearTextArea(responseArea);//очищаем форму
                 ReadFile readFile = new ReadFile();
                 String result = readFile.readFileAndSortedByScore(myFilms.getPath());
-                addValuesToFile.deleteAllinformation(sortedMyFilms);
+                addValuesToFile.deleteAllInformation(sortedMyFilms);
                 addValuesToFile.addValue(result, sortedMyFilms);
                 responseArea.append(result + "\n");
                 responseArea.setCaretPosition(0);// Устанавливаем курсор в начало JTextArea
             }
         });
 
-
         readFile.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                createLoading(1000);
+                createLoading(500);
 
                 sortedByName.setForeground(null);
                 sortedByScore.setForeground(null);
                 changeColorButton(readFile, Color.GREEN);
-
                 changeColorButton(sendButton, null);//возвращаем дефолтный цвет кнопке INPUT
                 clearTextArea(responseArea);//очищаем форму
 
@@ -157,36 +170,53 @@ public class JFrameWindowListener extends JFrame {
             @SneakyThrows
             @Override
             public void actionPerformed(ActionEvent e) {
-                createLoading(800);
+                createLoading(400);
+
+                //TODO сделать проверку на ввод фильма
                 String text = inputField.getText();
+
                 String scoreStr = score.getText();
-                if (!text.isEmpty() && !scoreStr.isEmpty()) {
-                    changeColorButton(sendButton, Color.GREEN);
-                    changeColorButton(readFile, null);//возвращаем дефолтный цвет кнопке readFile
-                    clearTextArea(responseArea);
-                    score.setText("");//делает пусты формы после ввода
-                    inputField.setText("");//делает пусты формы после ввода
-                    FilmDto filmDto = TextConverter.convertText(text, scoreStr);
-                    ReadFile readFile = new ReadFile();
-                    String allResult = readFile.readFile(myFilms.getPath());
-                    String oneLine = TextConverter.convertToStringBuilderAndAfterStringThreeFields(filmDto);
-                    String result = allResult + oneLine;
-                    addValuesToFile.deleteAllinformation(myFilms);
-                    addValuesToFile.addValue(result, myFilms);
-                    String resultStr = getAllValuesFromFIle.readFile(myFilms.getPath());
-                    responseArea.append(resultStr + "\n");
-                    addedFilmPanel();
-                } else {
-                    changeColorButton(sendButton, Color.RED);
-                    String randomNameImage = RandomNumber
+                String checkScore = checkScore(scoreStr);
+                if (checkScore == null) {//Если нет ошибки в вводе ошибки, checkScore должен быть равен null
+
+                    if (!text.isEmpty() && !scoreStr.isEmpty()) {
+                        changeColorButton(sendButton, Color.GREEN);
+                        changeColorButton(readFile, null);//возвращаем дефолтный цвет кнопке readFile
+                        clearTextArea(responseArea);
+                        score.setText("");//делает пусты формы после ввода
+                        inputField.setText("");//делает пусты формы после ввода
+                        FilmDto filmDto = getFilmDto(text, scoreStr);
+                        ReadFile readFile = new ReadFile();
+                        String allResult = readFile.readFile(myFilms.getPath());
+                        String oneLine = TextConverter.convertToStringBuilderAndAfterStringThreeFields(filmDto);
+
+                        SearchExistFilms searchExistFilms = new SearchExistFilms();
+                        searchExistFilms.searchConverter(allResult, oneLine);//этот шаг описан в методе searchConverter
+
+                        String result = allResult + oneLine;
+                        addValuesToFile.deleteAllInformation(myFilms);
+                        addValuesToFile.addValue(result, myFilms);
+                        String resultStr = getAllValuesFromFIle.readFile(myFilms.getPath());
+                        responseArea.append(resultStr + "\n");
+                        addedFilmPanel();
+                    } else {
+                        changeColorButton(sendButton, Color.RED);
+                        String randomNameImage = RandomNumber
+                            .getRandomNameImage("/not_values", ".gif", 8);
+                        createWarning("All fields must be filled in!", randomNameImage);
+                    }
+                    changeColorButton(sendButton, Color.CYAN);
+                    int lineCount = responseArea.getLineCount();
+                    if (lineCount
+                        < 2) {//очищаем, если только на responseArea только одна строка, если больше, то есть список всех фильмов - не очищаем
+                        clearTextArea(responseArea);
+                    }
+
+
+                }else {
+                    String randomNameImageForScore = RandomNumber//TODO добавить картинки на ошибку, которая связана с тем, что неправильно введена оценка
                         .getRandomNameImage("/not_values", ".gif", 8);
-                    createWarning("All fields must be filled in!", randomNameImage);
-                }
-                changeColorButton(sendButton, Color.CYAN);
-                int lineCount = responseArea.getLineCount();
-                if (lineCount
-                    < 2) {//очищаем, если только на responseArea только одна строка, если больше, то есть список всех фильмов - не очищаем
-                    clearTextArea(responseArea);
+                    createWarning(checkScore, randomNameImageForScore);
                 }
             }
         });
@@ -199,11 +229,60 @@ public class JFrameWindowListener extends JFrame {
         panel.add(angrySendButton);
         panel.add(readFile);
         panel.add(dropButton);
+        panel.add(exit);
 
         panel.add(gifLabel);
 
         add(panel, "North");
         add(new JScrollPane(responseArea), "Center");
+    }
+
+    //Проверка на корректность ввода оценки (что от 0 до 10, и что нет букв и тд)
+    private String checkScore(String score) {
+        String scoreTrim = score.trim();
+        char[] chars = scoreTrim.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            if (chars[i] == '1' ||
+                chars[i] == '2' ||
+                chars[i] == '3' ||
+                chars[i] == '4' ||
+                chars[i] == '5' ||
+                chars[i] == '6' ||
+                chars[i] == '7' ||
+                chars[i] == '8' ||
+                chars[i] == '9' ||
+                chars[i] == '0') {
+                continue;
+            } else {
+                return "Invalid character has been entered!";//Введен недопустимый символ! Можно вводить только цифры от 0 до 10!
+            }
+        }
+        int scoreInt = Integer.parseInt(scoreTrim);
+        if (scoreInt < 0) {
+            return "The score cannot be less than 0!";//Оценка не может быть меньше 0!
+        }
+        if (scoreInt > 10) {
+            return "The score cannot be more than 10!";//Оценка не может быть больше 10!
+        }
+        return null;
+    }
+
+    private FilmDto getFilmDto(String text, String scoreStr) {
+        return TextConverter.convertText(text, scoreStr, this);
+    }
+
+    private void mouseListener() {
+        addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                xMouse = e.getX();
+                yMouse = e.getY();
+            }
+        });
+        addMouseMotionListener(new MouseAdapter() {
+            public void mouseDragged(MouseEvent e) {
+                setLocation(getLocation().x + e.getX() - xMouse, getLocation().y + e.getY() - yMouse);
+            }
+        });
     }
 
     public static void main(String[] args) {

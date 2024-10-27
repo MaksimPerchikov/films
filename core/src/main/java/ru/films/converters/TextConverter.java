@@ -4,41 +4,48 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import javax.swing.JFrame;
 import ru.films.dto.FilmDto;
+import ru.films.service.RandomNumber;
+import ru.films.warning.WarningNotification;
 
 public class TextConverter {
 
     private static final List<String> listWords = new LinkedList<>();
 
-    public static FilmDto convertText(String text, String score) {
+    public static FilmDto convertText(String text, String score, JFrame parent) {
         FilmDto film = new FilmDto();
         film.setScore(score);
 
         String name = getNameFromText(text);
         film.setName(name);
-
         film.setId(Long.parseLong(String.valueOf(name.hashCode())));
-
-        String originalName = getOriginalNameFromText(text);
-        film.setOriginalName(originalName);
-
-
         try {
-            String yearOfRelease = getSimpleField(text, "Год выхода:", "Режиссер:");
-            film.setYearOfRelease(yearOfRelease);
-        } catch (Exception e) {
-            String yearOfRelease = getSimpleField(text, "Год выхода:", "Страна:");
-            film.setYearOfRelease(yearOfRelease);
-        }
+            if (!text.contains("Слоган:")) {
+                String originalName = getOriginalNameFromText(text);
+                film.setOriginalName(originalName);
+                try {
+                    String yearOfRelease = getSimpleField(text, "Год выхода:", "Режиссер:");
+                    film.setYearOfRelease(yearOfRelease);
+                } catch (Exception e) {
+                    String yearOfRelease = getSimpleField(text, "Год выхода:", "Страна:");
+                    film.setYearOfRelease(yearOfRelease);
+                }
 
-        try {
-            String director = getSimpleField(text, "Режиссер:", "Страна:");
-            film.setDirector(director);
-        } catch (Exception e) {
-            String director = getSimpleField(text, "Режиссер:", "Актеры:");
-            film.setDirector(director);
-        }
+                try {
+                    String director = getSimpleField(text, "Режиссер:", "Страна:");
+                    film.setDirector(director);
+                } catch (Exception e) {
+                    String director = getSimpleField(text, "Режиссер:", "Актеры:");
+                    film.setDirector(director);
+                }
+            }
 
+        } catch (Exception e) {
+            String randomNameImage = RandomNumber
+                .getRandomNameImage("/not_values", ".gif", 8);
+            createWarning("", randomNameImage, parent);
+        }
 
         List<String> actors = getListActors(text);
         film.setActors(actors);
@@ -46,6 +53,12 @@ public class TextConverter {
         List<String> genres = getListGenres(text);
         film.setGenres(genres);
         return film;
+
+    }
+
+    private static void createWarning(String message, String gifName, JFrame parent) {
+        WarningNotification warningNotification =
+            new WarningNotification(parent, message, gifName);
     }
 
     /**

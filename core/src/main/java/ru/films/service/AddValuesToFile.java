@@ -9,7 +9,6 @@ import java.io.OutputStreamWriter;
 public class AddValuesToFile {
 
     public void addValue(String text, File myFile) {
-
         try (OutputStreamWriter writer =
             new OutputStreamWriter(new FileOutputStream(myFile.getPath()), "UTF-8")) {
             writer.write(text);
@@ -19,7 +18,7 @@ public class AddValuesToFile {
         }
     }
 
-    public void deleteAllinformation(File myFilms) {
+    public void deleteAllInformation(File myFilms) {
         String filePath = myFilms.getPath();
         try {
             FileWriter fileWriter = new FileWriter(filePath);
