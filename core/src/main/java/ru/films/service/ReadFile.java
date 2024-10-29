@@ -1,27 +1,17 @@
 package ru.films.service;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Properties;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import ru.films.dto.FilmDto;
 import ru.films.dto.NameScoreDTO;
+
+import java.io.*;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ReadFile {
 
     public String readFile(String path) {
         StringBuilder sb = new StringBuilder();
         try (BufferedReader br =
-            new BufferedReader(new InputStreamReader(new FileInputStream(path), "UTF-8"))) {
+                     new BufferedReader(new InputStreamReader(new FileInputStream(path), "UTF-8"))) {
             String line = br.readLine();
             while (line != null) {
                 sb.append(line);
@@ -40,7 +30,7 @@ public class ReadFile {
         StringBuilder sb = new StringBuilder();
         List<NameScoreDTO> nameScoreDTOList = new ArrayList<>();
         try (BufferedReader br =
-            new BufferedReader(new InputStreamReader(new FileInputStream(mainPath), "UTF-8"))) {
+                     new BufferedReader(new InputStreamReader(new FileInputStream(mainPath), "UTF-8"))) {
             String line = br.readLine();
             while (line != null) {
                 int scoreInt = line.indexOf("Оценка ");
@@ -56,7 +46,7 @@ public class ReadFile {
         Comparator<NameScoreDTO> compareByName = (dto1, dto2) -> {
             // Сначала проверяем оценки
             int scoreCompare = Integer.compare(Integer.parseInt(dto1.getScore()),
-                Integer.parseInt(dto2.getScore())); // обратный порядок(dto1...dto2), сейчас НЕ обратный порядок указан
+                    Integer.parseInt(dto2.getScore())); // обратный порядок(dto1...dto2), сейчас НЕ обратный порядок указан
 
             // Если оценки равны, сортируем по названию фильма
             if (scoreCompare == 0) {
@@ -67,8 +57,8 @@ public class ReadFile {
         };
 
         ArrayList<NameScoreDTO> sortedValues = nameScoreDTOList.stream()
-            .sorted(compareByName.reversed())
-            .collect(Collectors.toCollection(ArrayList::new));
+                .sorted(compareByName.reversed())
+                .collect(Collectors.toCollection(ArrayList::new));
         sortedList(sb, sortedValues);
 
         return sb.toString();
@@ -91,15 +81,17 @@ public class ReadFile {
         TreeSet<NameScoreDTO> nameScoreDTOTreeSet = new TreeSet<NameScoreDTO>(comparable);
 
         try (BufferedReader br =
-            new BufferedReader(new InputStreamReader(new FileInputStream(mainPath), "UTF-8"))) {
+                     new BufferedReader(new InputStreamReader(new FileInputStream(mainPath), "UTF-8"))) {
             String line = br.readLine();
-            while (line != null) {
-                int scoreInt = line.indexOf("Оценка ");
-                String film = line.substring(0, scoreInt + 7);
-                String score = line.substring(scoreInt + 7, line.length());
-                NameScoreDTO nameScoreDTO = new NameScoreDTO(film, score);
-                nameScoreDTOTreeSet.add(nameScoreDTO);
-                line = br.readLine();
+            if (!line.equals("")) {
+                while (line != null) {
+                    int scoreInt = line.indexOf("Оценка ");
+                    String film = line.substring(0, scoreInt + 7);
+                    String score = line.substring(scoreInt + 7, line.length());
+                    NameScoreDTO nameScoreDTO = new NameScoreDTO(film, score);
+                    nameScoreDTOTreeSet.add(nameScoreDTO);
+                    line = br.readLine();
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -124,7 +116,7 @@ public class ReadFile {
         Properties properties = new Properties();
         try {
             InputStream inputStream = ReadFile.class
-                .getResourceAsStream("/config.properties");//key - value
+                    .getResourceAsStream("/config.properties");//key - value
             properties.load(inputStream);
 
             String value = properties.getProperty("key");
@@ -133,6 +125,6 @@ public class ReadFile {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return "Путь не найден";
+        return "Path not found";
     }
 }

@@ -24,9 +24,9 @@ public class AddValuesToFile {
             FileWriter fileWriter = new FileWriter(filePath);
             fileWriter.write("");
             fileWriter.close();
-            System.out.println("Содержимое файла успешно удалено.");
+            System.out.println("The contents of the file have been successfully deleted.");
         } catch (IOException e) {
-            System.out.println("Возникла ошибка при удалении содержимого файла: " + e.getMessage());
+            System.out.println("An error occurred while deleting the contents of the file: " + e.getMessage());
         }
     }
 }

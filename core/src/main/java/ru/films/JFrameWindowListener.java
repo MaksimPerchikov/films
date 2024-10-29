@@ -1,57 +1,50 @@
 package ru.films;
 
-import static ru.films.listener.FileListener.createFileText;
-
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.IOException;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 import lombok.SneakyThrows;
 import ru.films.converters.TextConverter;
 import ru.films.dto.FilmDto;
+import ru.films.helpers.CheckScoreFieldHelper;
+import ru.films.helpers.CheckYearField;
 import ru.films.panels.AngryInputPanel;
 import ru.films.panels.FilmAddedPanel;
 import ru.films.panels.LoadingPanel;
 import ru.films.service.AddValuesToFile;
 import ru.films.service.RandomNumber;
 import ru.films.service.ReadFile;
-import ru.films.service.SearchExistFilms;
 import ru.films.warning.WarningNotification;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
+
+import static ru.films.listener.FileListener.createFileText;
 
 public class JFrameWindowListener extends JFrame {
 
-    private JTextField inputField;//о фильме
-    private JTextField score;//оценка
-    private JButton sendButton;//input
-    private JButton angrySendButton;//angry input
-    private JButton readFile;//read
-    private JButton exit;//exit
-    private JTextArea responseArea;
-    private AddValuesToFile addValuesToFile;
+    private final JTextField inputField;//о фильме
+    private final JTextField score;//оценка
+    private final JTextField year;//год
+    private final JButton sendButton;//input
+    private final JButton angrySendButton;//angry input
+    private final JButton readFile;//read
+    private final JButton exit;//exit
+    private final JTextArea responseArea;
+    private final AddValuesToFile addValuesToFile;
 
-    private JPopupMenu popupMenu;// выпадающие кнопки
-    private JButton dropButton;// выпадающие кнопки
-    private JMenuItem sortedByName;
-    private JMenuItem sortedByScore;
+    private final JPopupMenu popupMenu;// выпадающие кнопки
+    private final JButton dropButton;// выпадающие кнопки
+    private final JMenuItem sortedByName;
+    private final JMenuItem sortedByScore;
 
-    private JLabel gifLabel;
+    private final JLabel gifLabel;
     private int xMouse, yMouse;
+    private final CheckYearField checkYearField;
+    private final CheckScoreFieldHelper checkScoreFieldHelper;
 
     public JFrameWindowListener() throws IOException {
         setUndecorated(true);//убрать рамку
@@ -63,7 +56,8 @@ public class JFrameWindowListener extends JFrame {
         File sortedMyFilms = createFileText("sortedMyFilms.txt");
         setSize(1000, 700);
         inputField = new JTextField(20);
-        score = new JTextField(10);
+        year = new JTextField(7);
+        score = new JTextField(5);
 
         sendButton = new JButton("Input");
         sendButton.setBackground(Color.CYAN);//INPUT кнопка
@@ -88,6 +82,9 @@ public class JFrameWindowListener extends JFrame {
         popupMenu.add(sortedByScore);
 
         mouseListener();
+
+        checkYearField = new CheckYearField();
+        checkScoreFieldHelper = new CheckScoreFieldHelper();
 
         exit.addActionListener(new ActionListener() {
             @Override
@@ -171,27 +168,29 @@ public class JFrameWindowListener extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 createLoading(400);
-
-                //TODO сделать проверку на ввод фильма
                 String text = inputField.getText();
-
+                String yearGetting = year.getText();
+                String yearStr = checkYearField.checkAvailabilityYear(yearGetting);
                 String scoreStr = score.getText();
-                String checkScore = checkScore(scoreStr);
-                if (checkScore == null) {//Если нет ошибки в вводе ошибки, checkScore должен быть равен null
+                String checkScore = checkScoreFieldHelper.checkScore(scoreStr);
+                checkScoreWarning(checkScore);
+
+
+                if (text != null) {//Если нет ошибки в вводе ошибки, checkScore должен быть равен null
+
+                    //TODO сделать проверку на ввод наименование фильма, существует ли такой фильм или нет
 
                     if (!text.isEmpty() && !scoreStr.isEmpty()) {
                         changeColorButton(sendButton, Color.GREEN);
                         changeColorButton(readFile, null);//возвращаем дефолтный цвет кнопке readFile
                         clearTextArea(responseArea);
                         score.setText("");//делает пусты формы после ввода
+                        year.setText("");//делает пусты формы после ввода
                         inputField.setText("");//делает пусты формы после ввода
-                        FilmDto filmDto = getFilmDto(text, scoreStr);
+                        FilmDto filmDto = getFilmDto(text, scoreStr, yearStr);
                         ReadFile readFile = new ReadFile();
                         String allResult = readFile.readFile(myFilms.getPath());
-                        String oneLine = TextConverter.convertToStringBuilderAndAfterStringThreeFields(filmDto);
-
-                        SearchExistFilms searchExistFilms = new SearchExistFilms();
-                        searchExistFilms.searchConverter(allResult, oneLine);//этот шаг описан в методе searchConverter
+                        String oneLine = TextConverter.convertToStringBuilderAndAfterStringThreeFields(filmDto, allResult);
 
                         String result = allResult + oneLine;
                         addValuesToFile.deleteAllInformation(myFilms);
@@ -202,31 +201,32 @@ public class JFrameWindowListener extends JFrame {
                     } else {
                         changeColorButton(sendButton, Color.RED);
                         String randomNameImage = RandomNumber
-                            .getRandomNameImage("/not_values", ".gif", 8);
+                                .getRandomNameImage("/not_values", ".gif", 8);
                         createWarning("All fields must be filled in!", randomNameImage);
                     }
                     changeColorButton(sendButton, Color.CYAN);
                     int lineCount = responseArea.getLineCount();
-                    if (lineCount
-                        < 2) {//очищаем, если только на responseArea только одна строка, если больше, то есть список всех фильмов - не очищаем
+                    if (lineCount < 2) {//очищаем, если только на responseArea только одна строка, если больше, то есть список всех фильмов - не очищаем
                         clearTextArea(responseArea);
                     }
-
-
-                }else {
-                    String randomNameImageForScore = RandomNumber//TODO добавить картинки на ошибку, которая связана с тем, что неправильно введена оценка
-                        .getRandomNameImage("/not_values", ".gif", 8);
-                    createWarning(checkScore, randomNameImageForScore);
+                } else {
+                    changeColorButton(sendButton, Color.RED);
+                    String randomNameImage = RandomNumber
+                            .getRandomNameImage("/not_values", ".gif", 8);
+                    createWarning("All fields must be filled in!", randomNameImage);
                 }
+
             }
         });
 
         panel.add(new JLabel("Film:"));
         panel.add(inputField);
+        panel.add(new JLabel("Year:"));
+        panel.add(year);
         panel.add(new JLabel("Score:"));
         panel.add(score);
         panel.add(sendButton);
-        panel.add(angrySendButton);
+        //panel.add(angrySendButton);
         panel.add(readFile);
         panel.add(dropButton);
         panel.add(exit);
@@ -237,38 +237,8 @@ public class JFrameWindowListener extends JFrame {
         add(new JScrollPane(responseArea), "Center");
     }
 
-    //Проверка на корректность ввода оценки (что от 0 до 10, и что нет букв и тд)
-    private String checkScore(String score) {
-        String scoreTrim = score.trim();
-        char[] chars = scoreTrim.toCharArray();
-        for (int i = 0; i < chars.length; i++) {
-            if (chars[i] == '1' ||
-                chars[i] == '2' ||
-                chars[i] == '3' ||
-                chars[i] == '4' ||
-                chars[i] == '5' ||
-                chars[i] == '6' ||
-                chars[i] == '7' ||
-                chars[i] == '8' ||
-                chars[i] == '9' ||
-                chars[i] == '0') {
-                continue;
-            } else {
-                return "Invalid character has been entered!";//Введен недопустимый символ! Можно вводить только цифры от 0 до 10!
-            }
-        }
-        int scoreInt = Integer.parseInt(scoreTrim);
-        if (scoreInt < 0) {
-            return "The score cannot be less than 0!";//Оценка не может быть меньше 0!
-        }
-        if (scoreInt > 10) {
-            return "The score cannot be more than 10!";//Оценка не может быть больше 10!
-        }
-        return null;
-    }
-
-    private FilmDto getFilmDto(String text, String scoreStr) {
-        return TextConverter.convertText(text, scoreStr, this);
+    private FilmDto getFilmDto(String text, String scoreStr, String year) {
+        return new FilmDto(text, scoreStr, year);
     }
 
     private void mouseListener() {
@@ -316,7 +286,7 @@ public class JFrameWindowListener extends JFrame {
 
     private void createWarning(String message, String gifName) {
         WarningNotification warningNotification =
-            new WarningNotification(this, message, gifName);
+                new WarningNotification(this, message, gifName);
     }
 
     private void addedFilmPanel() {
@@ -326,6 +296,21 @@ public class JFrameWindowListener extends JFrame {
     private void createLoading(int millis) {
         LoadingPanel loadingPanel = new LoadingPanel(this, millis);
         loadingPanel.setVisible(true);
+    }
+
+    /**
+     * Ошибка или оценка находится в этой строке
+     *
+     * @return
+     */
+    private void checkScoreWarning(String score) {
+        if (!(score.length() > 0 && score.length() < 3)) {
+            //TODO добавить картинки на ошибку, которая связана с тем, что неправильно введена оценка
+            String randomNameImage = RandomNumber
+                    .getRandomNameImage("/not_values", ".gif", 8);
+            createWarning(score, randomNameImage);
+            throw new RuntimeException(score);
+        }
     }
 
 }

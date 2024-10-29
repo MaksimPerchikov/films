@@ -1,21 +1,21 @@
 package ru.films.converters;
 
+import ru.films.dto.FilmDto;
+import ru.films.warning.WarningNotification;
+
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import javax.swing.JFrame;
-import ru.films.dto.FilmDto;
-import ru.films.service.RandomNumber;
-import ru.films.warning.WarningNotification;
 
 public class TextConverter {
 
     private static final List<String> listWords = new LinkedList<>();
 
     public static FilmDto convertText(String text, String score, JFrame parent) {
-        FilmDto film = new FilmDto();
-        film.setScore(score);
+        //FilmDto film = new FilmDto();
+        /*film.setScore(score);
 
         String name = getNameFromText(text);
         film.setName(name);
@@ -51,30 +51,35 @@ public class TextConverter {
         film.setActors(actors);
 
         List<String> genres = getListGenres(text);
-        film.setGenres(genres);
-        return film;
-
+        film.setGenres(genres);*/
+        //return film;
+        return null;
     }
 
     private static void createWarning(String message, String gifName, JFrame parent) {
         WarningNotification warningNotification =
-            new WarningNotification(parent, message, gifName);
+                new WarningNotification(parent, message, gifName);
     }
 
     /**
      * Название, год и оценка фильм
      */
-    public static String convertToStringBuilderAndAfterStringThreeFields(FilmDto filmDto) {
-        String str = "\n" + filmDto.getName() + " "
-            + "(" + filmDto.getYearOfRelease() + ") " + "Оценка "
-            + filmDto.getScore() + "\n";
-        return str;
+    public static String convertToStringBuilderAndAfterStringThreeFields(FilmDto filmDto, String allResult) {
+        if (!allResult.equals("")) {
+            return "\n" + filmDto.getName() + " "
+                    + "(" + filmDto.getYearOfRelease() + ") " + "Оценка "
+                    + filmDto.getScore() + "\n";
+        } else {
+            return filmDto.getName() + " "
+                    + "(" + filmDto.getYearOfRelease() + ") " + "Оценка "
+                    + filmDto.getScore() + "\n";
+        }
     }
 
     /**
      * Полная информация о фильме
      */
-    public static String convertToStringBuilderAndAfterStringAllFields(FilmDto filmDto) {
+    /*public static String convertToStringBuilderAndAfterStringAllFields(FilmDto filmDto) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Моя оценка: " + filmDto.getScore() + "\n")
             .append("Название фильма: " + filmDto.getName() + "\n")
@@ -85,8 +90,7 @@ public class TextConverter {
             .append("Актеры: " + getListToString(filmDto.getActors()) + "\n")
             .append("-------------------------------------" + "\n");
         return stringBuilder.toString();
-    }
-
+    }*/
     private static String getListToString(List<String> list) {
         StringBuilder result = new StringBuilder();
         int count = 0;
@@ -210,7 +214,7 @@ public class TextConverter {
         if (originalString.contains(substringToRemove)) {
             return originalString.replace(substringToRemove, "").trim();
         } else {
-            System.out.println("Подстрока не найдена в строке.");
+            System.out.println("The substring was not found in the string..");
         }
         return "";
     }

@@ -1,13 +1,14 @@
 package ru.films.dto;
 
-import java.util.List;
+import lombok.AllArgsConstructor;
 
+@AllArgsConstructor
 public class FilmDto {
 
     /**
      * id фильма
      */
-    private Long id;
+    //private Long id;
 
     /**
      * наименование фильма
@@ -22,7 +23,7 @@ public class FilmDto {
     /**
      * оригинальное название фильма
      */
-    private String originalName;
+    // private String originalName;
 
     /**
      * дата выпуска
@@ -32,25 +33,24 @@ public class FilmDto {
     /**
      * режиссер
      */
-    private String director;
+    //private String director;
 
     /**
      * жанры
      */
-    private List<String> genres;
+    // private List<String> genres;
 
     /**
      * актеры
      */
-    private List<String> actors;
-
-    public Long getId() {
+    // private List<String> actors;
+    /*public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
-    }
+    }*/
 
     public String getName() {
         return name;
@@ -68,20 +68,21 @@ public class FilmDto {
         this.score = score;
     }
 
-    public String getOriginalName() {
-        return originalName;
-    }
-
-    public void setOriginalName(String originalName) {
-        this.originalName = originalName;
-    }
-
     public String getYearOfRelease() {
         return yearOfRelease;
     }
 
     public void setYearOfRelease(String yearOfRelease) {
         this.yearOfRelease = yearOfRelease;
+    }
+
+
+   /* public String getOriginalName() {
+        return originalName;
+    }
+
+    public void setOriginalName(String originalName) {
+        this.originalName = originalName;
     }
 
     public String getDirector() {
@@ -106,5 +107,5 @@ public class FilmDto {
 
     public void setActors(List<String> actors) {
         this.actors = actors;
-    }
+    }*/
 }
