@@ -3,6 +3,7 @@ package ru.films;
 import lombok.SneakyThrows;
 import ru.films.converters.TextConverter;
 import ru.films.dto.FilmDto;
+import ru.films.helpers.CheckFilmHelper;
 import ru.films.helpers.CheckScoreFieldHelper;
 import ru.films.helpers.CheckYearField;
 import ru.films.panels.AngryInputPanel;
@@ -21,6 +22,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 import static ru.films.listener.FileListener.createFileText;
 
@@ -30,21 +32,30 @@ public class JFrameWindowListener extends JFrame {
     private final JTextField score;//оценка
     private final JTextField year;//год
     private final JButton sendButton;//input
-    private final JButton angrySendButton;//angry input
     private final JButton readFile;//read
+    private final JButton randomFilm;//read
     private final JButton exit;//exit
     private final JTextArea responseArea;
     private final AddValuesToFile addValuesToFile;
+    private final JComboBox<String> comboBox;// чекбокс сериал ли это
 
     private final JPopupMenu popupMenu;// выпадающие кнопки
     private final JButton dropButton;// выпадающие кнопки
     private final JMenuItem sortedByName;
     private final JMenuItem sortedByScore;
+    private final JMenuItem sortedByNeedLook;
+    private final JMenuItem sortedByMCS;
 
     private final JLabel gifLabel;
     private int xMouse, yMouse;
     private final CheckYearField checkYearField;
     private final CheckScoreFieldHelper checkScoreFieldHelper;
+    private final CheckFilmHelper checkFilmHelper;
+
+    private final static String MOVIE_EN = "Movie";
+    private final static String CARTOON_EN = "Cartoon";
+    private final static String SERIAL_EN = "Serial";
+    private final static String NEED_LOOK_EN = "Need look";
 
     public JFrameWindowListener() throws IOException {
         setUndecorated(true);//убрать рамку
@@ -55,18 +66,23 @@ public class JFrameWindowListener extends JFrame {
         File myFilms = createFileText("myFilms.txt");
         File sortedMyFilms = createFileText("sortedMyFilms.txt");
         setSize(1000, 700);
-        inputField = new JTextField(20);
+        inputField = new JTextField(13);
         year = new JTextField(7);
         score = new JTextField(5);
+
+        String[] options = {MOVIE_EN, CARTOON_EN, SERIAL_EN, NEED_LOOK_EN};
+        comboBox = new JComboBox<>(options);
+        comboBox.setBackground(Color.GREEN);
 
         sendButton = new JButton("Input");
         sendButton.setBackground(Color.CYAN);//INPUT кнопка
 
-        angrySendButton = new JButton("Angry input");
-        angrySendButton.setBackground(Color.ORANGE);
         readFile = new JButton("Read from the file");
         sortedByName = new JMenuItem("Sort by Name");
         sortedByScore = new JMenuItem("Sort by Score");
+        sortedByNeedLook = new JMenuItem("Sort by Need look");
+        sortedByMCS = new JMenuItem("Sort by M->C->S");
+        randomFilm = new JButton("Get random film");
         exit = new JButton("Exit");
 
         responseArea = new JTextArea(15, 20);
@@ -80,27 +96,54 @@ public class JFrameWindowListener extends JFrame {
         popupMenu = new JPopupMenu();
         popupMenu.add(sortedByName);
         popupMenu.add(sortedByScore);
+        popupMenu.add(sortedByNeedLook);
+        popupMenu.add(sortedByMCS);
 
         mouseListener();
 
         checkYearField = new CheckYearField();
         checkScoreFieldHelper = new CheckScoreFieldHelper();
+        checkFilmHelper = new CheckFilmHelper();
+
+        randomFilm.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                createLoading(500);
+                sortedByName.setBackground(null);
+                sortedByScore.setBackground(null);
+                sortedByNeedLook.setBackground(null);
+                sortedByMCS.setBackground(null);
+                readFile.setBackground(null);
+                changeColorButton(randomFilm, Color.GREEN);
+                changeColorButton(sendButton, null);//возвращаем дефолтный цвет кнопке INPUT
+                clearTextArea(responseArea);//очищаем форму
+                String result = getAllValuesFromFIle.readFile(myFilms.getPath());
+                ReadFile readFileObject = new ReadFile();
+                String randomFilm = readFileObject.getRandomFilm(result);
+                responseArea.append(randomFilm + "\n");
+            }
+        });
+
+        comboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Получаем выбранное значение
+                String selectedValue = (String) comboBox.getSelectedItem();
+                switch (Objects.requireNonNull(selectedValue)) {
+                    case MOVIE_EN -> comboBox.setBackground(Color.GREEN);
+                    case CARTOON_EN -> comboBox.setBackground(Color.YELLOW);
+                    case SERIAL_EN -> comboBox.setBackground(Color.PINK);
+                    case NEED_LOOK_EN -> comboBox.setBackground(Color.WHITE);
+                    default -> comboBox.setBackground(Color.RED);
+                }
+            }
+        });
 
         exit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 setVisible(false);
                 dispose();
-            }
-        });
-
-        angrySendButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                changeColorButton(angrySendButton, Color.GREEN);
-                createLoading(500);
-                openAngryInputPanel();
-                changeColorButton(angrySendButton, Color.ORANGE);
             }
         });
 
@@ -115,8 +158,10 @@ public class JFrameWindowListener extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 createLoading(100);
-                sortedByName.setForeground(Color.GREEN);
-                sortedByScore.setForeground(null);
+                sortedByName.setBackground(Color.GREEN);
+                sortedByScore.setBackground(null);
+                sortedByMCS.setBackground(null);
+                sortedByNeedLook.setBackground(null);
                 changeColorButton(readFile, null);//возвращаем дефолтный цвет кнопке readFile
                 clearTextArea(responseArea);//очищаем форму
                 ReadFile readFile = new ReadFile();
@@ -133,8 +178,10 @@ public class JFrameWindowListener extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 createLoading(100);
 
-                sortedByName.setForeground(null);
-                sortedByScore.setForeground(Color.GREEN);
+                sortedByName.setBackground(null);
+                sortedByNeedLook.setBackground(null);
+                sortedByMCS.setBackground(null);
+                sortedByScore.setBackground(Color.GREEN);
                 changeColorButton(readFile, null);//возвращаем дефолтный цвет кнопке readFile
 
                 clearTextArea(responseArea);//очищаем форму
@@ -147,17 +194,60 @@ public class JFrameWindowListener extends JFrame {
             }
         });
 
+        sortedByNeedLook.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                createLoading(100);
+
+                sortedByName.setBackground(null);
+                sortedByScore.setBackground(null);
+                sortedByMCS.setBackground(null);
+                sortedByNeedLook.setBackground(Color.GREEN);
+                changeColorButton(readFile, null);//возвращаем дефолтный цвет кнопке readFile
+
+                clearTextArea(responseArea);//очищаем форму
+                ReadFile readFile = new ReadFile();
+                String result = readFile.readFileAndSortedByNeedLook(myFilms.getPath());
+                addValuesToFile.deleteAllInformation(sortedMyFilms);
+                addValuesToFile.addValue(result, sortedMyFilms);
+                responseArea.append(result + "\n");
+                responseArea.setCaretPosition(0);// Устанавливаем курсор в начало JTextArea
+            }
+        });
+
+        sortedByMCS.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                createLoading(100);
+
+                sortedByName.setBackground(null);
+                sortedByScore.setBackground(null);
+                sortedByNeedLook.setBackground(null);
+                sortedByMCS.setBackground(Color.GREEN);
+                changeColorButton(readFile, null);//возвращаем дефолтный цвет кнопке readFile
+
+                clearTextArea(responseArea);//очищаем форму
+                ReadFile readFile = new ReadFile();
+                String result = readFile.readFileAndSortedByMCS(myFilms.getPath());
+                addValuesToFile.deleteAllInformation(sortedMyFilms);
+                addValuesToFile.addValue(result, sortedMyFilms);
+                responseArea.append(result + "\n");
+                responseArea.setCaretPosition(0);// Устанавливаем курсор в начало JTextArea
+            }
+        });
+
         readFile.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 createLoading(500);
-
-                sortedByName.setForeground(null);
-                sortedByScore.setForeground(null);
+                sortedByName.setBackground(null);
+                sortedByScore.setBackground(null);
+                sortedByNeedLook.setBackground(null);
+                sortedByMCS.setBackground(null);
+                randomFilm.setBackground(null);
                 changeColorButton(readFile, Color.GREEN);
                 changeColorButton(sendButton, null);//возвращаем дефолтный цвет кнопке INPUT
                 clearTextArea(responseArea);//очищаем форму
-
                 String result = getAllValuesFromFIle.readFile(myFilms.getPath());
                 responseArea.append(result + "\n");
             }
@@ -172,27 +262,27 @@ public class JFrameWindowListener extends JFrame {
                 String yearGetting = year.getText();
                 String yearStr = checkYearField.checkAvailabilityYear(yearGetting);
                 String scoreStr = score.getText();
-                String checkScore = checkScoreFieldHelper.checkScore(scoreStr);
-                checkScoreWarning(checkScore);
-
+                boolean scopeBoolean = true;
+                String filmType = (String) comboBox.getSelectedItem();
+                if(!Objects.requireNonNull(filmType).equals(NEED_LOOK_EN)) {// если фильм типа НУЖНО ПОСМОТРЕТЬ, то не надо проверять оценку
+                    String checkScore = checkScoreFieldHelper.checkScore(scoreStr);
+                    checkScoreWarning(checkScore);
+                    scopeBoolean = !scoreStr.isEmpty();
+                }
 
                 if (text != null) {//Если нет ошибки в вводе ошибки, checkScore должен быть равен null
-
-                    //TODO сделать проверку на ввод наименование фильма, существует ли такой фильм или нет
-
-                    if (!text.isEmpty() && !scoreStr.isEmpty()) {
+                    if (!text.isEmpty() && scopeBoolean) {
                         changeColorButton(sendButton, Color.GREEN);
                         changeColorButton(readFile, null);//возвращаем дефолтный цвет кнопке readFile
                         clearTextArea(responseArea);
                         score.setText("");//делает пусты формы после ввода
                         year.setText("");//делает пусты формы после ввода
                         inputField.setText("");//делает пусты формы после ввода
-                        FilmDto filmDto = getFilmDto(text, scoreStr, yearStr);
-                        ReadFile readFile = new ReadFile();
-                        String allResult = readFile.readFile(myFilms.getPath());
-                        String oneLine = TextConverter.convertToStringBuilderAndAfterStringThreeFields(filmDto, allResult);
-
-                        String result = allResult + oneLine;
+                        FilmDto filmDto = getFilmDto(text, scoreStr, yearStr, filmType);
+                        ReadFile readFileObject = new ReadFile();
+                        String allResult = readFileObject.readFile(myFilms.getPath());
+                        String oneLineFullInfo = TextConverter.convertToStringBuilderAndAfterStringFiveFields(filmDto, allResult);
+                        String result = checkFilmHelper.checkCurrentFilmByName(allResult, oneLineFullInfo);
                         addValuesToFile.deleteAllInformation(myFilms);
                         addValuesToFile.addValue(result, myFilms);
                         String resultStr = getAllValuesFromFIle.readFile(myFilms.getPath());
@@ -225,10 +315,11 @@ public class JFrameWindowListener extends JFrame {
         panel.add(year);
         panel.add(new JLabel("Score:"));
         panel.add(score);
+        panel.add(comboBox);
         panel.add(sendButton);
-        //panel.add(angrySendButton);
         panel.add(readFile);
         panel.add(dropButton);
+        panel.add(randomFilm);
         panel.add(exit);
 
         panel.add(gifLabel);
@@ -237,8 +328,8 @@ public class JFrameWindowListener extends JFrame {
         add(new JScrollPane(responseArea), "Center");
     }
 
-    private FilmDto getFilmDto(String text, String scoreStr, String year) {
-        return new FilmDto(text, scoreStr, year);
+    private FilmDto getFilmDto(String text, String scoreStr, String year, String filmType) {
+        return new FilmDto(text, scoreStr, year, filmType);
     }
 
     private void mouseListener() {
@@ -312,5 +403,5 @@ public class JFrameWindowListener extends JFrame {
             throw new RuntimeException(score);
         }
     }
-
 }
+
