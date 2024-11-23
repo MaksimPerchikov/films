@@ -21,11 +21,11 @@ public class CheckFilmHelper {
         Map<Boolean, String> resultMap = new HashMap<>();
         String currentFilm = newEntry.replace("\n", "");
         StringBuilder updated = new StringBuilder();
-        String newName = currentFilm.split(" ")[0]; // Получаем название из новой строки
+        String newName = currentFilm.split("\\(")[0].trim(); // Разделяем по знаку '(' и берем первую часть, убирая пробелы // Получаем название из новой строки
         boolean found = false; // Флаг для отслеживания совпадений
 
         for (String line : original.split("\n")) {
-            String currentName = line.split(" ")[0]; // Получаем название из текущей строки
+            String currentName = line.split("\\(")[0].trim(); // Получаем название из текущей строки
             if (currentName.equals(newName)) {
                 updated.append(currentFilm).append("\n"); // Заменяем на новую строку
                 found = true; // Устанавливаем флаг совпадения
