@@ -1,5 +1,29 @@
 package ru.films;
 
+import static ru.films.listener.FileListener.createFileText;
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Objects;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import lombok.SneakyThrows;
 import ru.films.converters.TextConverter;
 import ru.films.dto.FilmDto;
@@ -13,18 +37,6 @@ import ru.films.service.AddValuesToFile;
 import ru.films.service.RandomNumber;
 import ru.films.service.ReadFile;
 import ru.films.warning.WarningNotification;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.IOException;
-import java.util.Objects;
-
-import static ru.films.listener.FileListener.createFileText;
 
 public class JFrameWindowListener extends JFrame {
 
@@ -264,7 +276,8 @@ public class JFrameWindowListener extends JFrame {
                 String scoreStr = score.getText();
                 boolean scopeBoolean = true;
                 String filmType = (String) comboBox.getSelectedItem();
-                if(!Objects.requireNonNull(filmType).equals(NEED_LOOK_EN)) {// если фильм типа НУЖНО ПОСМОТРЕТЬ, то не надо проверять оценку
+                if (!Objects.requireNonNull(filmType)
+                    .equals(NEED_LOOK_EN)) {// если фильм типа НУЖНО ПОСМОТРЕТЬ, то не надо проверять оценку
                     String checkScore = checkScoreFieldHelper.checkScore(scoreStr);
                     checkScoreWarning(checkScore);
                     scopeBoolean = !scoreStr.isEmpty();
@@ -281,28 +294,41 @@ public class JFrameWindowListener extends JFrame {
                         FilmDto filmDto = getFilmDto(text, scoreStr, yearStr, filmType);
                         ReadFile readFileObject = new ReadFile();
                         String allResult = readFileObject.readFile(myFilms.getPath());
-                        String oneLineFullInfo = TextConverter.convertToStringBuilderAndAfterStringFiveFields(filmDto, allResult);
-                        String result = checkFilmHelper.checkCurrentFilmByName(allResult, oneLineFullInfo);
-                        addValuesToFile.deleteAllInformation(myFilms);
-                        addValuesToFile.addValue(result, myFilms);
+                        String oneLineFullInfo = TextConverter.convertToStringBuilderAndAfterStringFiveFields(filmDto,
+                            allResult);
+
+                        Map<Boolean, String> result = checkFilmHelper.checkCurrentFilmByName(allResult,
+                            oneLineFullInfo);
+                        boolean addOrUpdateFilm = false; //false - добавлен новый, true - обновлен старый
+                        for (Map.Entry<Boolean, String> entry : result.entrySet()) {
+                            addOrUpdateFilm = entry.getKey();
+                            addValuesToFile.deleteAllInformation(myFilms);
+                            addValuesToFile.addValue(entry.getValue(), myFilms);
+                        }
                         String resultStr = getAllValuesFromFIle.readFile(myFilms.getPath());
                         responseArea.append(resultStr + "\n");
-                        addedFilmPanel();
+
+                        if (!addOrUpdateFilm) {
+                            addedFilmPanel("Film added!");
+                        } else {
+                            addedFilmPanel("Found film has been updated!");
+                        }
                     } else {
                         changeColorButton(sendButton, Color.RED);
                         String randomNameImage = RandomNumber
-                                .getRandomNameImage("/not_values", ".gif", 8);
+                            .getRandomNameImage("/not_values", ".gif", 8);
                         createWarning("All fields must be filled in!", randomNameImage);
                     }
                     changeColorButton(sendButton, Color.CYAN);
                     int lineCount = responseArea.getLineCount();
-                    if (lineCount < 2) {//очищаем, если только на responseArea только одна строка, если больше, то есть список всех фильмов - не очищаем
+                    if (lineCount
+                        < 2) {//очищаем, если только на responseArea только одна строка, если больше, то есть список всех фильмов - не очищаем
                         clearTextArea(responseArea);
                     }
                 } else {
                     changeColorButton(sendButton, Color.RED);
                     String randomNameImage = RandomNumber
-                            .getRandomNameImage("/not_values", ".gif", 8);
+                        .getRandomNameImage("/not_values", ".gif", 8);
                     createWarning("All fields must be filled in!", randomNameImage);
                 }
 
@@ -377,11 +403,11 @@ public class JFrameWindowListener extends JFrame {
 
     private void createWarning(String message, String gifName) {
         WarningNotification warningNotification =
-                new WarningNotification(this, message, gifName);
+            new WarningNotification(this, message, gifName);
     }
 
-    private void addedFilmPanel() {
-        FilmAddedPanel filmAddedPanel = new FilmAddedPanel(this);
+    private void addedFilmPanel(String message) {
+        FilmAddedPanel filmAddedPanel = new FilmAddedPanel(this, message);
     }
 
     private void createLoading(int millis) {
@@ -398,7 +424,7 @@ public class JFrameWindowListener extends JFrame {
         if (!(score.length() > 0 && score.length() < 3)) {
             //TODO добавить картинки на ошибку, которая связана с тем, что неправильно введена оценка
             String randomNameImage = RandomNumber
-                    .getRandomNameImage("/not_values", ".gif", 8);
+                .getRandomNameImage("/not_values", ".gif", 8);
             createWarning(score, randomNameImage);
             throw new RuntimeException(score);
         }

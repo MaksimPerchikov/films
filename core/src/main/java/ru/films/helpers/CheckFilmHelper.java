@@ -1,8 +1,7 @@
 package ru.films.helpers;
 
-import ru.films.dto.FilmDto;
-
-import java.util.Locale;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Класс проверки наличия фильма
@@ -11,14 +10,15 @@ public class CheckFilmHelper {
 
     /**
      * Проверка наличия конкретного фильма из списка всех фильмов
+     *
      * @return true - если такой фильм уже существует
      */
-    public String checkCurrentFilmByName(String allFilms, String currentFilm){
-        String updatedData = updateData(allFilms, currentFilm);
-        return updatedData;
+    public Map<Boolean, String> checkCurrentFilmByName(String allFilms, String currentFilm) {
+        return updateData(allFilms, currentFilm);
     }
 
-    public static String updateData(String original, String newEntry) {
+    public static Map<Boolean, String> updateData(String original, String newEntry) {
+        Map<Boolean, String> resultMap = new HashMap<>();
         String currentFilm = newEntry.replace("\n", "");
         StringBuilder updated = new StringBuilder();
         String newName = currentFilm.split(" ")[0]; // Получаем название из новой строки
@@ -36,6 +36,8 @@ public class CheckFilmHelper {
         if (!found) {
             updated.append(currentFilm).append("\n"); // Добавляем новую строку, если совпадений не было
         }
-        return updated.toString().trim(); // Убираем последний перенос строки
+        String result = updated.toString().trim();// Убираем последний перенос строки
+        resultMap.put(found, result);
+        return resultMap;
     }
 }

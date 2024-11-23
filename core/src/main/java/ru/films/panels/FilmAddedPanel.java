@@ -13,13 +13,13 @@ import ru.films.service.RandomNumber;
 
 public class FilmAddedPanel extends JDialog {
 
-    public FilmAddedPanel(JFrame parentFrame){
-        super(parentFrame, "Film added!", true);
+    public FilmAddedPanel(JFrame parentFrame, String message) {
+        super(parentFrame, message, true);
         setSize(300, 200);
         setUndecorated(true);
 
         JPanel topPanel = new JPanel(new BorderLayout());
-        JLabel messageLabel = new JLabel("Film added!", SwingConstants.CENTER);
+        JLabel messageLabel = new JLabel(message, SwingConstants.CENTER);
         topPanel.add(messageLabel, BorderLayout.CENTER);
 
         JLabel gifLabel = new JLabel();
@@ -27,7 +27,7 @@ public class FilmAddedPanel extends JDialog {
 
         String randomNameImage = RandomNumber.getRandomNameImage("/added_film", ".gif", 4);
         imageHandler.showGif(gifLabel, 200, 200, randomNameImage);
-        JPanel gifPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));//располагаю по центру окна
+        JPanel gifPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
         gifPanel.add(gifLabel);
 
         JButton okButton = new JButton("OK");
@@ -37,7 +37,7 @@ public class FilmAddedPanel extends JDialog {
         add(gifPanel, BorderLayout.CENTER);
         add(okButton, BorderLayout.SOUTH);
 
-        setLocationRelativeTo(parentFrame);//в центре появляется
+        setLocationRelativeTo(parentFrame);//пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         setVisible(true);
     }
 
